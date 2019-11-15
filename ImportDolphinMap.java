@@ -43,7 +43,7 @@ public class ImportDolphinMap extends GhidraScript {
 			Address addr = toAddr(split[0]);
 
 			// Use namespace if provided
-			String[] splitName = split[4].split("::");
+			String[] splitName = split[4].split("::", 2);
 			Namespace ns;
 			String newSymbolName;
 			if (splitName.length == 2) {
@@ -54,13 +54,11 @@ public class ImportDolphinMap extends GhidraScript {
 				} catch (DuplicateNameException e) {
 					ns = symbolTable.getNamespace(nsName, globalNs);
 				}
-			} else if (splitName.length == 1) {
+			} else { // splitName.length == 1
 				ns = globalNs;
 				newSymbolName = splitName[0];
-			} else {
-				throw new RuntimeException("Invalid symbol name");
 			}
-			
+
 			// Remove existing symbols at the address of this symbol
 			Symbol[] userSymbols = symbolTable.getUserSymbols(addr);
 			for (Symbol s : userSymbols) {
