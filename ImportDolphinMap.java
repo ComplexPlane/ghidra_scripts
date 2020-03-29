@@ -35,7 +35,7 @@ public class ImportDolphinMap extends GhidraScript {
 		String action = askChoice("Choose Action", "Choose action", actions, importAction);
 
 		while ((line = mapFile.readLine()) != null) {
-			if (line.matches("^\\..+section layout$") || line.length() == 0) {
+			if (line.matches("^.+section layout$") || line.length() == 0) {
 				continue;
 			}
 
