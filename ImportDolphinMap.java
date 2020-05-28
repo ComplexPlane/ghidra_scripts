@@ -30,8 +30,9 @@ public class ImportDolphinMap extends GhidraScript {
 
 		// Select action
 		String importAction = "Import map (replacing existing symbols at conflicting addresses)";
-		String clearAction = "Clear map (delete symbols at adddresses contained in map)";
-		List<String> actions = new ArrayList<>(Arrays.asList(importAction, clearAction));
+		String renameAction = "Rename existing symbols using map";
+		String clearAction = "Delete symbols at addresses in map";
+		List<String> actions = new ArrayList<>(Arrays.asList(importAction, renameAction, clearAction));
 		String action = askChoice("Choose Action", "Choose action", actions, importAction);
 
 		while ((line = mapFile.readLine()) != null) {
@@ -59,19 +60,33 @@ public class ImportDolphinMap extends GhidraScript {
 				newSymbolName = splitName[0];
 			}
 
-			// Remove existing symbols at the address of this symbol
 			Symbol[] userSymbols = symbolTable.getUserSymbols(addr);
-			for (Symbol s : userSymbols) {
-				symbolTable.removeSymbolSpecial(s);
-			}
 
-			if (action == importAction) {
+			if (action.equals(importAction)) {
+				// Remove existing symbols at the address of this symbol
+				for (Symbol s : userSymbols) {
+					symbolTable.removeSymbolSpecial(s);
+				}
+
 				// Create new IMPORTED label
 				symbolTable.createLabel(addr, newSymbolName, ns, SourceType.IMPORTED);
+
+				popup("It's recommended to re-analyze this file when you're ready");
+
+			} else if (action.equals(renameAction)) {
+				for (Symbol s : userSymbols) {
+					s.setName(newSymbolName, s.getSource());
+				}
+
+			} else if (action.equals(clearAction)) {
+				// Remove existing symbols at the address of this symbol
+				for (Symbol s : userSymbols) {
+					symbolTable.removeSymbolSpecial(s);
+				}
+
+				popup("It's recommended to re-analyze this file when you're ready");
 			}
 		}
 
-		// removeSymbolSpecial() supposedly will remove symbol references, so re-analyze to restore them
-		popup("It's recommended to re-analyze this file when you're ready");
 	}
 }
