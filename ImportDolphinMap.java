@@ -1,5 +1,5 @@
 //@author ComplexPlane
-//@description Imports labels found by strand_match.
+//@description Imports symbols provided in a Dolphin-compatible symbol map. New symbols are created for unlabelled addresses, and existing symbols at provided addresses are renamed to match the symbol map.
 //@category SMB
 //@keybinding
 //@menupath
@@ -29,10 +29,9 @@ public class ImportDolphinMap extends GhidraScript {
 		String line;
 
 		// Select action
-		String importAction = "Import map (replacing existing symbols at conflicting addresses)";
-		String renameAction = "Rename existing symbols using map";
+		String importAction = "Import map (add new symbols and rename existing symbols)";
 		String clearAction = "Delete symbols at addresses in map";
-		List<String> actions = new ArrayList<>(Arrays.asList(importAction, renameAction, clearAction));
+		List<String> actions = new ArrayList<>(Arrays.asList(importAction, clearAction));
 		String action = askChoice("Choose Action", "Choose action", actions, importAction);
 
 		while ((line = mapFile.readLine()) != null) {
@@ -63,19 +62,14 @@ public class ImportDolphinMap extends GhidraScript {
 			Symbol[] userSymbols = symbolTable.getUserSymbols(addr);
 
 			if (action.equals(importAction)) {
-				// Remove existing symbols at the address of this symbol
-				for (Symbol s : userSymbols) {
-					symbolTable.removeSymbolSpecial(s);
-				}
-
-				// Create new IMPORTED label
-				symbolTable.createLabel(addr, newSymbolName, ns, SourceType.IMPORTED);
-
-				popup("It's recommended to re-analyze this file when you're ready");
-
-			} else if (action.equals(renameAction)) {
-				for (Symbol s : userSymbols) {
-					s.setName(newSymbolName, s.getSource());
+				if (userSymbols.length == 0) {
+					symbolTable.createLabel(addr, newSymbolName, ns, SourceType.IMPORTED);
+				} else {
+					for (Symbol s : userSymbols) {
+						if (!s.getName().equals(newSymbolName)) {
+							s.setName(newSymbolName, SourceType.IMPORTED);
+						}
+					}
 				}
 
 			} else if (action.equals(clearAction)) {
@@ -84,9 +78,9 @@ public class ImportDolphinMap extends GhidraScript {
 					symbolTable.removeSymbolSpecial(s);
 				}
 
-				popup("It's recommended to re-analyze this file when you're ready");
 			}
 		}
 
+		popup("It's recommended to re-analyze this file when you're ready");
 	}
 }
