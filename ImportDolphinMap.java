@@ -63,11 +63,15 @@ public class ImportDolphinMap extends GhidraScript {
 
 			if (action.equals(importAction)) {
 				if (userSymbols.length == 0) {
-					symbolTable.createLabel(addr, newSymbolName, ns, SourceType.IMPORTED);
+						symbolTable.createLabel(addr, newSymbolName, ns, SourceType.IMPORTED);
 				} else {
 					for (Symbol s : userSymbols) {
 						if (!s.getName().equals(newSymbolName)) {
-							s.setName(newSymbolName, SourceType.IMPORTED);
+							try {
+								s.setName(newSymbolName, SourceType.IMPORTED);
+							} catch (ghidra.util.exception.DuplicateNameException e) {
+								// Why does this fire sometimes?
+							}
 						}
 					}
 				}
