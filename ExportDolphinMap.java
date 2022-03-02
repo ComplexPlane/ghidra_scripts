@@ -35,7 +35,7 @@ public class ExportDolphinMap extends GhidraScript {
 		for (Function func : prog.getFunctionManager().getFunctions(true)) {
 			Address addr = func.getEntryPoint();
 			if (endMainLoopAddr.subtract(addr) <= 0) continue;
-			if (func.getSymbol().getSource() == SourceType.DEFAULT) continue;
+			// if (func.getSymbol().getSource() == SourceType.DEFAULT) continue;
 
 			String addrStr = addr.toString();
 			long size = func.getBody().getNumAddresses();
