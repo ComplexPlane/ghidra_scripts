@@ -49,11 +49,6 @@ public class ImportIDAMap extends GhidraScript {
 
 		MemoryBlock[] blocks = currentProgram.getMemory().getBlocks();
 
-		HashSet<Address> strAddrSet = new HashSet<>();
-		for (Data data : DefinedDataIterator.definedStrings(currentProgram)) {
-			strAddrSet.add(data.getAddress());
-		}
-
 		while ((line = mapFile.readLine()) != null) {
 			line = line.strip();
 			Matcher lineMatcher = linePattern.matcher(line);
@@ -67,6 +62,9 @@ public class ImportIDAMap extends GhidraScript {
 
 			if (name.startsWith("def_") || name.startsWith("jpt_")) continue;
 
+			// Ghidra labels can contain most characters but not space apparently
+			name = name.replaceAll(" ", "");
+
 			Address addr = blocks[section].getStart().add(offset);
 
 			if (cppNamePattern.matcher(name).matches()) {
@@ -79,15 +77,13 @@ public class ImportIDAMap extends GhidraScript {
 				try {
 					createAsciiString(addr);
 				} catch (Exception e) {
-					printerr(String.format("Could not create string: 0x%s %s\n", addr.toString(), name));
+					// printerr(String.format("Could not create string: 0x%s %s", addr.toString(), name));
 				}
 			} else {
 				Matcher cNameMatcher = cNamePattern.matcher(name);
 				if (cNameMatcher.matches()) {
-//					printf("C name: 0x%s %s\n", addr.toString(), cNameMatcher.group(1));
 					addSymbol(cNameMatcher.group(1), addr, action);
 				} else {
-//					printf("Unknown symbol type: 0x%s %s\n", addr.toString(), name);
 					addSymbol(name, addr, action);
 				}
 			}
@@ -105,8 +101,7 @@ public class ImportIDAMap extends GhidraScript {
 				try {
 					symbolTable.createLabel(addr, name, SourceType.IMPORTED);
 				} catch (InvalidInputException e) {
-					printf("Failed to create symbol: 0x%s %s\n", addr.toString(), name);
-//					e.printStackTrace();
+					printerr(String.format("Failed to create label: 0x%s %s", addr.toString(), name));
 				}
 			} else {
 				for (Symbol s : userSymbols) {
@@ -114,8 +109,7 @@ public class ImportIDAMap extends GhidraScript {
 						try {
 							s.setName(name, SourceType.IMPORTED);
 						} catch (InvalidInputException | DuplicateNameException e) {
-							printf("Failed to create symbol: 0x%s %s\n", addr.toString(), name);
-//							e.printStackTrace();
+							printerr(String.format("Failed to rename symbol: 0x%s %s", addr.toString(), name));
 						}
 					}
 				}
